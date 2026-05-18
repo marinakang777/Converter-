@@ -1,0 +1,50 @@
+Структура данных для истории: Список словарей.
+
+history_data = []
+HISTORY_FILE = "history.json"
+Функции для работы с JSON:
+def save_history():
+    try:
+        with open(HISTORY_FILE, "w") as f:
+            json.dump(history_data, f, indent=4)
+    except IOError as e:
+        messagebox.showerror("File Error", f"Could not save history to {HISTORY_FILE}: {e}")
+
+def load_history():
+    nonlocal history_data
+    try:
+        with open(HISTORY_FILE, "r") as f:
+            history_data = json.load(f)
+        update_history_table()
+    except FileNotFoundError:
+        history_data = [] # File doesn't exist yet, start fresh
+    except (IOError, json.JSONDecodeError) as e:
+        messagebox.showerror("File Error", f"Could not load history from {HISTORY_FILE}: {e}")
+        history_data = [] # Corrupted file, reset history
+
+Функция для добавления записи в историю и обновления GUI:
+
+def add_to_history(from_currency, to_currency, amount, result):
+    history_data.append({
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "from_currency": from_currency,
+        "to_currency": to_currency,
+        "amount": amount,
+        "result": result
+    })
+    save_history()
+    update_history_table()
+
+def update_history_table():
+    # Clear previous data
+    for item in history_table.get_children():
+        history_table.delete(item)
+    # Insert new data
+    for entry:.2f}",
+            f"{entry['result']:.2f}"
+        ))
+Вызов load_history() при запуске:
+python
+# Call this before root.mainloop()
+# load_history()
+
