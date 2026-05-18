@@ -1,0 +1,54 @@
+# --- GUI Elements ---
+
+# Frame for currency selection
+currency_frame = ttk.Frame(root, padding="10")
+currency_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+
+ttk.Label(currency_frame, text="From:").grid(row=0, column=0, padx=5, pady=5)
+currency_from_combo = ttk.Combobox(currency_frame, state="readonly", width=15)
+currency_from_combo.grid(row=0, column=1, padx=5, pady=5)
+
+ttk.Label(currency_frame, text="To:").grid(row=0, column=2, padx=5, pady=5)
+currency_to_combo = ttk.Combobox(currency_frame, state="readonly", width=15)
+currency_to_combo.grid(row=0, column=3, padx=5, pady=5)
+
+# Frame for amount input and conversion
+input_frame = ttk.Frame(root, padding="10")
+input_frame.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+
+ttk.Label(input_frame, text="Amount:").grid(row=0, column=0, padx=5, pady=5)
+amount_entry = ttk.Entry(input_frame, width=20)
+amount_entry.grid(row=0, column=1, padx=5, pady=5)
+
+convert_button = ttk.Button(input_frame, text="Convert", command=lambda: perform_conversion())
+convert_button.grid(row=0, column=2, padx=5, pady=5)
+
+result_label = ttk.Label(input_frame, text="Result: -")
+result_label.grid(row=0, column=3, padx=5, pady=5)
+
+# Frame for history table
+history_frame = ttk.LabelFrame(root, text="History", padding="10")
+history_frame.grid(row=2, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), padx=10, pady=10)
+
+# Treeview for history
+history_table = ttk.Treeview(history_frame, columns=("Date", "From", "To", "Amount", "Result"), show="headings")
+history_table.heading("Date", text="Date")
+history_table.heading("From", text="From")
+history_table.heading("To", text="To")
+history_table.heading("Amount", text="Amount")
+history_table.heading("Result", text="Result")
+
+# Configure column widths (adjust as needed)
+history_table.column("Date", width=120, anchor=tk.CENTER)
+history_table.column("From", width=80, anchor=tk.CENTER)
+history_table.column("To", width=80, anchor=tk.CENTER)
+history_table.column("Amount", width=100, anchor=tk.CENTER)
+history_table.column("Result", width=100, anchor=tk.CENTER)
+
+# Add scrollbar
+scrollbar = ttk.Scrollbar(history_frame, orient=tk.VERTICAL, command=history_table.yview)
+history_table.configure(yscroll=scrollbar.set)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+history_table.pack(expand=True, fill=tk.BOTH)
+
+# --- End of GUI Elements ---
