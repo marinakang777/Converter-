@@ -1,0 +1,55 @@
+Выберите API: exchangerate-api.com хороший вариант. Вам нужно будет получить API-ключ.
+
+Установите библиотеку requests:
+
+bash
+pip install requests
+
+Функция для получения курсов:
+
+
+Получите список поддерживаемых валют.
+Получите актуальный курс обмена.
+API_KEY = "YOUR_API_KEY"  # Вставьте ваш API-ключ сюда
+BASE_URL = "https://v6.exchangerate-api.com/v6/"
+
+def get_supported_currencies():
+    try:
+        response = requests.get(f"{BASE_URL}{API_KEY}/codes")
+        data = response.json()
+        if data["result"] == "success":
+            return {code: name for code, name in data["supported_codes"]}
+        else:
+            messagebox.showerror("API Error", f"Failed to fetch supported currencies: {data['error-type']}")
+            return {}
+    except requests.exceptions.RequestException as e:
+        messagebox.showerror("Network Error", f"Could not connect to API: {e}")
+        return {}
+
+def get_exchange_rate(from_currency, to_currency):
+    try:
+        response = requests.get(f"{BASE_URL}{API_KEY}/latest/{from_currency}")
+        data = response.json()
+        if data["result"] == "success":
+            return data["conversion_rates"].get(to_currency)
+        else:
+            messagebox.showerror("API Error", f"Failed to fetch exchange rate: {data['error-type']}")
+            return None
+    except requests.exceptions.RequestException as e:
+        messagebox.showerror("Network Error", f"Could not connect to API: {e}")
+        return None
+Инициализация GUI: Заполните Combobox валютами после получения списка.
+def initialize_gui():
+    supported_codes = get_supported_currencies()
+    if supported_codes:
+        valid_currencies = list(supported_codes.keys())
+        currency_from_combo["values"] = valid_currencies
+        currency_to_combo["values"] = valid_currencies
+        if valid_currencies:
+            currency_from_combo.current(0) # Set default to first currency
+            currency_to_combo.current(valid_currencies.index("USD") if "USD" in valid_currencies else 0) # Try to set USD or first one
+
+# Call this before root.mainloop()
+# initialize_gui()
+
+
