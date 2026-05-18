@@ -2,18 +2,15 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import requests
 import json
-import os # Для проверки существования файла истории
-from datetime import datetime # Импорт для добавления текущей даты/времени в историю
+import os
+from datetime import datetime
 
-# --- Configuration ---
+# --- Configuration & Global Variables ---
 # **ВАЖНО:** Замените "YOUR_API_KEY" на ваш реальный API-ключ с exchangerate-api.com
-# После замены, пожалуйста, перезапустите приложение.
 API_KEY = "YOUR_API_KEY" 
 API_BASE_URL = "https://v6.exchangerate-api.com/v6/"
-HISTORY_FILE_PATH = "history.json" # Файл для хранения истории конвертаций
+HISTORY_FILE_PATH = "history.json" 
 
-# --- Global Variables ---
-# Инициализация глобальных переменных, которые будут использоваться в приложении
 root = None
 currency_from_combo = None
 currency_to_combo = None
@@ -21,26 +18,20 @@ amount_entry = None
 result_label = None
 history_table = None
 convert_button = None
-history_data = [] # Список для хранения истории в памяти
+history_data = [] 
 
-# --- API Functions ---
+# --- API Functions (unchanged from previous good version) ---
 def get_supported_currencies():
-    """
-    Получает список поддерживаемых кодов валют с API.
-    Возвращает список строк (кодов валют) или пустой список в случае ошибки.
-    """
+    """Gets a list of supported currency codes from the API."""
     if not API_KEY or API_KEY == "YOUR_API_KEY":
         messagebox.showwarning("API Key Error", "API Key is not set. Cannot fetch currency list. Please set it in the script.")
-        return [] # Возвращаем пустой список, если API-ключ не установлен
-
+        return []
     url = f"{API_BASE_URL}{API_KEY}/codes"
     try:
-        response = requests.get(url, timeout=10) # Добавлен таймаут для запроса
-        response.raise_for_status()  # Вызывает исключение для некорректных статусов HTTP (4xx или 5xx)
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
         data = response.json()
         if data.get("result") == "success":
-            # API возвращает список списков: [["USD", "United States Dollar"], ...]
-            # Нам нужны только коды валют (первый элемент каждого внутреннего списка)
             return [code for code, name in data.get("supported_codes", [])]
         else:
             error_type = data.get("error-type", "Unknown error")
@@ -57,20 +48,15 @@ def get_supported_currencies():
         return []
 
 def get_exchange_rate(from_currency, to_currency):
-    """
-    Получает текущий обменный курс между двумя валютами.
-    Возвращает число (курс) или None в случае ошибки.
-    """
+    """Gets the current exchange rate between two currencies."""
     if not API_KEY or API_KEY == "YOUR_API_KEY":
         messagebox.showwarning("API Key Error", "API Key is not set. Cannot fetch exchange rates. Please set it in the script.")
-        return None # Возвращаем None, если API-ключ не установлен
-
+        return None
     url = f"{API_BASE_URL}{API_KEY}/latest/{from_currency}"
     try:
-        response = requests.get(url, timeout=10) # Добавлен таймаут
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
         data = response.json()
-
         if data.get("result") == "success":
             rates = data.get("conversion_rates")
             if rates and to_currency in rates:
@@ -92,70 +78,60 @@ def get_exchange_rate(from_currency, to_currency):
         messagebox.showerror("API Error", "Could not decode API response.")
         return None
 
-# --- History Functions ---
+# --- History Functions (unchanged from previous good version) ---
 def load_history():
-    """Загружает данные истории из JSON файла."""
+    """Loads history data from a JSON file."""
     global history_data
     if os.path.exists(HISTORY_FILE_PATH):
         try:
-            with open(HISTORY_FILE_PATH, 'r', encoding='utf-8') as f: # Указана кодировка
+            with open(HISTORY_FILE_PATH, 'r', encoding='utf-8') as f:
                 history_data = json.load(f)
         except (IOError, json.JSONDecodeError) as e:
             messagebox.showerror("History Load Error", f"Could not load history from {HISTORY_FILE_PATH}: {e}")
-            history_data = [] # Сброс к пустому списку, если загрузка не удалась
+            history_data = []
     else:
-        history_data = [] # Файл истории не существует, начинаем с пустой истории
-    update_history_table() # Обновляем таблицу после загрузки
+        history_data = []
+    update_history_table()
 
 def save_history():
-    """Сохраняет данные истории в JSON файл."""
+    """Saves history data to a JSON file."""
     try:
-        with open(HISTORY_FILE_PATH, 'w', encoding='utf-8') as f: # Указана кодировка
-            json.dump(history_data, f, indent=4) # indent=4 для удобочитаемости файла
+        with open(HISTORY_FILE_PATH, 'w', encoding='utf-8') as f:
+            json.dump(history_data, f, indent=4)
     except IOError as e:
         messagebox.showerror("History Save Error", f"Could not save history to {HISTORY_FILE_PATH}: {e}")
 
 def add_to_history(from_curr, to_curr, amount, result):
-    """
-    Добавляет запись о конвертации в историю и обновляет таблицу.
-    """
+    """Adds a conversion record to history and updates the table."""
     new_record = {
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), # Формат даты и времени
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "from_currency": from_curr,
         "to_currency": to_curr,
         "amount": amount,
         "result": result
     }
     history_data.append(new_record)
-    save_history() # Сохраняем историю после добавления новой записи
-    update_history_table() # Обновляем отображение истории
+    save_history()
+    update_history_table()
 
 def update_history_table():
-    """
-    Очищает таблицу истории и заполняет её заново актуальными данными.
-    """
-    # Очистить существующие записи в таблице
+    """Clears and repopulates the history table with current data."""
     for item in history_table.get_children():
         history_table.delete(item)
-
-    # Вставить новые данные из history_data
-    # Отображать самые последние записи первыми
     for entry in reversed(history_data):
         try:
-            # Используем insert для добавления строк в конец таблицы
             history_table.insert("", "end", values=(
                 entry["timestamp"],
                 entry["from_currency"],
                 entry["to_currency"],
-                # Форматирование вывода до 2 знаков после запятой для лучшей читаемости
                 f"{float(entry['amount']):.2f}", 
                 f"{float(entry['result']):.2f}"
             ))
         except KeyError as e:
             print(f"Warning: Missing key {e} in history entry: {entry}. Skipping this entry.")
         except (ValueError, TypeError) as e:
-            print(f"Warning: Error formatting number for entry {entry}: {e}. Skipping formatting for this entry.")
-            history_table.insert("", "end", values=( # Вставляем как есть, если форматирование не удалось
+            print(f"Warning: Error formatting number for entry {entry}: {e}.")
+            history_table.insert("", "end", values=(
                 entry.get("timestamp", "N/A"),
                 entry.get("from_currency", "N/A"),
                 entry.get("to_currency", "N/A"),
@@ -164,66 +140,65 @@ def update_history_table():
             ))
 
 # --- GUI Logic ---
+
+# --- MODIFIED is_valid_amount ---
 def is_valid_amount(amount_str):
     """
-    Проверяет, является ли введенная строка корректной суммой (положительное число).
-    Возвращает:
-        bool: True, если строка валидна, False иначе.
-        float: Преобразованная сумма, если валидна, 0 иначе.
-        str: Сообщение об ошибке, если строка невалидна, пустая строка иначе.
+    Checks if the input string is a valid positive amount.
+    Returns:
+        tuple: (bool, float, str) - (is_valid, amount, error_message)
+               error_message is empty if validation passes.
     """
     try:
         amount = float(amount_str)
         if amount <= 0:
-            # Возвращаем False, 0 и сообщение об ошибке
-            return False, 0, "Amount must be positive." 
-        # Возвращаем True, преобразованную сумму и пустую строку ошибки
-        return True, amount, "" 
+            return False, 0, "Amount must be a positive value." # Использовано положительное значение
+        return True, amount, "" # Пустая строка ошибки при успехе
     except ValueError:
-        # Неверный формат числа
-        return False, 0, "Invalid number format. Please enter a numeric value." 
+        return False, 0, "Invalid number format. Please enter a numeric value." # Сообщение об ошибке формата
 
+# --- MODIFIED perform_conversion ---
 def perform_conversion():
     """
-    Выполняет процесс конвертации: проверка ввода, вызов API, отображение результата и обновление истории.
+    Performs the currency conversion: validates input, calls API, displays result, and updates history.
     """
     from_currency = currency_from_combo.get()
     to_currency = currency_to_combo.get()
     amount_str = amount_entry.get()
 
-    # Проверка, выбраны ли валюты
+    # Check if currencies are selected
     if not from_currency or not to_currency:
         messagebox.showwarning("Input Error", "Please select both 'From' and 'To' currencies.")
         return
 
-    # Валидация введенной суммы
+    # Validate the input amount using the improved function
     is_valid, amount, error_msg = is_valid_amount(amount_str)
     if not is_valid:
-        messagebox.showwarning("Input Error", error_msg)
+        messagebox.showwarning("Input Error", error_msg) # Показываем конкретное сообщение об ошибке
         return
 
-    # Получаем обменный курс
+    # Get the exchange rate
     rate = get_exchange_rate(from_currency, to_currency)
 
     if rate is not None:
         converted_amount = amount * rate
-        # Отображаем результат с форматированием до 2 знаков после запятой
+        # Display the result with full context and formatting
         result_label.config(text=f"Result: {amount:.2f} {from_currency} = {converted_amount:.2f} {to_currency}")
-        # Добавляем в историю
+        # Add to history
         add_to_history(from_currency, to_currency, amount, converted_amount)
     else:
-        # Если курс не удалось получить, очищаем поле результата
+        # If rate fetching failed, clear result and inform user
         result_label.config(text="Result: Error fetching rate")
 
+# --- GUI Setup (unchanged from previous good version) ---
 def setup_gui():
-    """Настраивает графический интерфейс приложения."""
+    """Sets up the application's graphical user interface."""
     global root, currency_from_combo, currency_to_combo, amount_entry, result_label, history_table, convert_button
 
     root = tk.Tk()
     root.title("Currency Converter")
-    root.geometry("650x550") # Увеличено для лучшего отображения таблицы истории
+    root.geometry("650x550")
 
-    # --- Input Frame ---
     input_frame = ttk.LabelFrame(root, text="Convert", padding=(10, 5))
     input_frame.pack(pady=10, padx=10, fill="x")
 
@@ -238,8 +213,7 @@ def setup_gui():
     ttk.Label(input_frame, text="Amount:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
     amount_entry = ttk.Entry(input_frame, width=20)
     amount_entry.grid(row=2, column=1, padx=5, pady=5)
-    # Привязываем функцию проверки и конвертации к нажатию Enter в поле ввода суммы
-    amount_entry.bind("<Return>", lambda event: perform_conversion()) 
+    amount_entry.bind("<Return>", lambda event: perform_conversion())
 
     convert_button = ttk.Button(input_frame, text="Convert", command=perform_conversion)
     convert_button.grid(row=2, column=2, padx=10, pady=5)
@@ -247,58 +221,47 @@ def setup_gui():
     result_label = ttk.Label(input_frame, text="Result: ", width=40)
     result_label.grid(row=3, column=0, columnspan=3, padx=5, pady=10, sticky="w")
 
-    # --- History Frame ---
     history_frame = ttk.LabelFrame(root, text="History", padding=(10, 5))
     history_frame.pack(pady=10, padx=10, fill="both", expand=True)
 
-    # Настройка скроллбаров для таблицы
     tree_scroll = ttk.Scrollbar(history_frame)
     tree_scroll.pack(side="right", fill="y")
 
     tree_scroll_x = ttk.Scrollbar(history_frame, orient="horizontal")
     tree_scroll_x.pack(side="bottom", fill="x")
 
-    # Определение колонок таблицы истории
     columns = ("timestamp", "from_currency", "to_currency", "amount", "result")
     history_table = ttk.Treeview(history_frame, columns=columns, show="headings", yscrollcommand=tree_scroll.set, xscrollcommand=tree_scroll_x.set)
 
-    # Настройка заголовков колонок
     history_table.heading("timestamp", text="Timestamp")
     history_table.heading("from_currency", text="From")
     history_table.heading("to_currency", text="To")
     history_table.heading("amount", text="Amount")
     history_table.heading("result", text="Result")
 
-    # Настройка ширины колонок (можно настроить по желанию)
     history_table.column("timestamp", width=150, anchor="w")
     history_table.column("from_currency", width=70, anchor="center")
     history_table.column("to_currency", width=70, anchor="center")
-    history_table.column("amount", width=100, anchor="e") # Выравнивание по правому краю для чисел
-    history_table.column("result", width=100, anchor="e") # Выравнивание по правому краю для чисел
+    history_table.column("amount", width=100, anchor="e") 
+    history_table.column("result", width=100, anchor="e")
 
     history_table.pack(fill="both", expand=True)
 
-    # Привязка скроллбаров к таблице
     tree_scroll.config(command=history_table.yview)
     tree_scroll_x.config(command=history_table.xview)
 
-    # --- Load initial data ---
-    load_history() # Загружаем историю при старте приложения
+    load_history()
 
-    # --- Populate currency dropdowns ---
     supported_currencies = get_supported_currencies()
     if supported_currencies:
         currency_from_combo['values'] = supported_currencies
         currency_to_combo['values'] = supported_currencies
-        # Устанавливаем значения по умолчанию, если они доступны
         if "USD" in supported_currencies:
             currency_from_combo.set("USD")
         if "EUR" in supported_currencies:
             currency_to_combo.set("EUR")
     else:
         messagebox.showerror("Initialization Error", "Could not load supported currencies. Please check your API key and internet connection.")
-        # Можно закрыть приложение или оставить его с пустыми комбобоксами
-        # root.destroy() # Раскомментируйте, если хотите закрыть приложение при ошибке
 
     root.mainloop()
 
