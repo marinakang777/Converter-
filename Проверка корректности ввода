@@ -1,0 +1,28 @@
+def is_valid_amount(amount_str):
+    try:
+        amount = float(amount_str)
+        return amount > 0, amount
+    except ValueError:
+        return False, 0
+
+def perform_conversion():
+    from_currency = currency_from_combo.get()
+    to_currency = currency_to_combo.get()
+    amount_str = amount_entry.get()if not from_currency or not to_currency:
+    messagebox.showwarning("Input Error", "Please select both currencies.")
+    return
+
+is_valid, amount = is_valid_amount(amount_str)
+if not is_valid:
+    messagebox.showwarning("Input Error", "Please enter a positive numeric amount.")
+    return
+
+rate = get_exchange_rate(from_currency, to_currency)
+if rate is not None:
+    converted_amount = amount * rate
+    result_label.config(text=f"Result: {converted_amount:.2f} {to_currency}")
+    add_to_history(from_currency, to_currency, amount, converted_amount)
+else:
+    result_label.config(text="Result: Error")
+
+            
