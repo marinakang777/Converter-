@@ -1,0 +1,30 @@
+Импорт tkinter:
+
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
+import requests
+import json
+from datetime import datetime
+
+Создание  сновного окна:
+root = tk.Tk()
+root.title("Currency Converter")
+
+Элементы интерфейса:
+
+Выбор валют:
+tk.Label для подписей.
+ttk.Combobox для выпадающих списков валют. Вам понадобится получить список доступных валют от API.
+
+Поле ввода суммы:
+tk.Label для подписи.
+tk.Entry для ввода суммы
+
+Кнопка конвертации:
+tk.Button для запуска конвертации.
+
+Отображение результата:
+tk.Label для вывода сконвертированной суммы.
+
+Таблица истории:
+ttk.Treeview для отображения истории конвертаций (дата, из валюты, в валюту, сумма, результат).
