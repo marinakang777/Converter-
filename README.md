@@ -32,6 +32,11 @@ API: exchangerate-api.com (или любой другой с доступным 
 Для запуска приложения склонируйте репозиторий:
 https://github.com/marinakang777/
 запустите программу Converter
+**Установка зависимостей:
+ ``bash pip install -r requirements.txt ``
+ **Настройка ключа API:
+ ** Откройте файл `main.py` в текстовом редакторе.
+ Найти строку: ``python API_KEY = "YOUR_API_KEY" `` и заменить "YOUR_API_KEY"" на фактический API-ключ, полученный из exchangerate-api.com.
 
 Примеры использования приложения  Converter:
 
